@@ -1,4 +1,4 @@
 aiogram==3.4.1
 aiosqlite
-flask[async]
+flask==3.0.3
 flask-cors
