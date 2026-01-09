@@ -16,7 +16,7 @@ from flask_cors import CORS
 import threading
 
 # ================== НАЛАШТУВАННЯ ==================
-BOT_TOKEN = "8464882605:AAGYmi1hrRe6WKyacDGZKmmU-1bjuoPoXpc"
+BOT_TOKEN = "8464882605:AAEeg1wShpxq9n14OJelhoS4t6StaUA_oqY"
 CHANNEL_USERNAME = "@feikDiq"
 CHANNEL_ID = -1001234567890
 ADMIN_ID = 7760606749
