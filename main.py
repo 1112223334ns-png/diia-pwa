@@ -4,7 +4,7 @@ import os
 import random
 import string
 import datetime
-import sqlite3  # Для синхронного init_db и get_data
+import sqlite3  # Для всех синхронных запросов к БД
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
@@ -41,7 +41,7 @@ def photos(filename):
     return send_from_directory(PHOTOS_DIR, filename)
 
 @flask_app.route("/get_data")
-def get_data():  # Синхронная — без async
+def get_data():
     code = request.args.get("code")
     if not code:
         return jsonify({"fio": "Невірний код", "birthdate": "", "photo_url": ""})
@@ -79,7 +79,7 @@ storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 logging.basicConfig(level=logging.INFO)
 
-def init_db():  # Синхронная — без async
+def init_db():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute('''
@@ -110,13 +110,16 @@ class States(StatesGroup):
 def generate_code():
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
 
-async def send_code_message(user_id: int, sub_type: str = "test"):
+def get_code_from_db(user_id):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute("SELECT code FROM users WHERE user_id=?", (user_id,))
     row = cursor.fetchone()
     conn.close()
-    code = row[0] if row else generate_code()
+    return row[0] if row else generate_code()
+
+async def send_code_message(user_id: int, sub_type: str = "test"):
+    code = get_code_from_db(user_id)
     text = (
         f"🎉 Ваша {'тестова ' if sub_type == 'test' else ''}підписка активна{' на 30 хвилин' if sub_type == 'test' else ''}!\n\n"
         f"🔑 Код для входу: {code}\n\n"
@@ -127,7 +130,6 @@ async def send_code_message(user_id: int, sub_type: str = "test"):
     )
     await bot.send_message(user_id, text)
 
-# ================== Весь функционал бота (полный) ==================
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -141,12 +143,14 @@ async def cmd_start(message: Message):
     )
     await message.answer(text, reply_markup=keyboard, disable_web_page_preview=True)
 
-# (Весь остальной код хендлеров — как был, без изменений — вставь от @dp.callback_query до @dp.message(Command("reset")))
+# (Весь остальной функционал бота — хендлеры от agree_rules до cmd_reset — как был, без изменений)
 
 async def main():
-    init_db()  # Синхронный вызов
+    init_db()
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
+    threading.Thread(target=run_flask, daemon=True).start()
+    asyncio.run(main())
     threading.Thread(target=run_flask, daemon=True).start()
     asyncio.run(main())
