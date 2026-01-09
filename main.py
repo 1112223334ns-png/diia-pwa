@@ -4,7 +4,7 @@ import os
 import random
 import string
 import datetime
-import sqlite3  # Для всех синхронных запросов к БД
+import sqlite3  # Для всех запросов к БД (синхронно)
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
@@ -130,6 +130,7 @@ async def send_code_message(user_id: int, sub_type: str = "test"):
     )
     await bot.send_message(user_id, text)
 
+# ================== Весь функционал бота (полный) ==================
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -143,14 +144,12 @@ async def cmd_start(message: Message):
     )
     await message.answer(text, reply_markup=keyboard, disable_web_page_preview=True)
 
-# (Весь остальной функционал бота — хендлеры от agree_rules до cmd_reset — как был, без изменений)
+# (Весь остальной код хендлеров — как был, без изменений — от agree_rules до cmd_reset)
 
 async def main():
     init_db()
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    threading.Thread(target=run_flask, daemon=True).start()
-    asyncio.run(main())
     threading.Thread(target=run_flask, daemon=True).start()
     asyncio.run(main())
