@@ -16,11 +16,11 @@ from flask_cors import CORS
 import threading
 
 # ================== НАЛАШТУВАННЯ ==================
-BOT_TOKEN = "8464882605:AAEeg1wShpxq9n14OJelhoS4t6StaUA_oqY"
+BOT_TOKEN = "8464882605:AAEeg1wShpxq9n14OJelhoS4t6StaUA_oqY"  # Твій токен
 CHANNEL_USERNAME = "@feikDiq"
 CHANNEL_ID = -1001234567890
-ADMIN_ID = 7760606749  # Зміни на свій реальний Telegram ID !!!
-PWA_URL = "PWA_URL = "https://54ea4241-8157-43fb-9ca8-198f7d0dd46b-00-3d0k52f2s1oxa.janeway.replit.dev/""  # Твій актуальний Replit URL !!!
+ADMIN_ID = 7760606749  # ЗМІНИ НА СВІЙ РЕАЛЬНИЙ ID З @userinfobot
+PWA_URL = "https://0abd3f29-ff47-4f02-81ec-b3163d0b4b45-00-3an69uglbidm3.worf.replit.dev/"  # Твоя посилання
 RULES_URL = "https://telegra.ph/твоє_посилання_на_правила"
 INSTRUCTION_URL = "https://telegra.ph/твоє_посилання_на_інструкцію_оплати"
 SUPPORT_USERNAME = "@твій_підтримка"
@@ -315,7 +315,8 @@ async def approve_crypto(callback: CallbackQuery):
     conn.close()
     await send_code_message(user_id, "paid")
     await bot.send_message(user_id, "✅ Ваша підписка активована!")
-    await callback.answer("Підписку підключено")
+    await callback.message.edit_text("Підписка успішно підключена!")
+    await callback.answer("Готово!")
 
 @dp.callback_query(lambda c: c.data == "check_crypto")
 async def check_crypto(callback: CallbackQuery):
@@ -400,13 +401,13 @@ async def approve_card(callback: CallbackQuery):
     conn.close()
     await send_code_message(user_id, "paid")
     await bot.send_message(user_id, "✅ Ваша підписка активована!")
-    await callback.answer("Підписку видано")
+    await callback.message.edit_text("Підписка успішно підключена!")
+    await callback.answer("Готово!")
 
 @dp.callback_query(lambda c: c.data and c.data.startswith("deny_card"))
 async def deny_card(callback: CallbackQuery):
     user_id = int(callback.data.split("_")[2])
     text = (
-        "Вашу підписку було відхилено.\n"
         "Вашу підписку було відхилено.\n"
         "Якщо ви дійсно здійснили оплату, будь ласка, зв’яжіться зі службою підтримки для перевірки платежу."
     )
