@@ -4,7 +4,7 @@ import os
 import random
 import string
 import datetime
-import sqlite3  # Для всех запросов к БД (синхронно)
+import sqlite3  # Все через синхронний sqlite3
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
@@ -16,11 +16,11 @@ from flask_cors import CORS
 import threading
 
 # ================== НАЛАШТУВАННЯ ==================
-BOT_TOKEN = "8464882605:AAEeg1wShpxq9n14OJelhoS4t6StaUA_oqY"
+BOT_TOKEN = "8464882605:AAEeg1wShpxq9n14OJelhoS4t6StaUA_oqY"  # Твій токен
 CHANNEL_USERNAME = "@feikDiq"
 CHANNEL_ID = -1001234567890
-ADMIN_ID = 7760606749
-PWA_URL = "https://0abd3f29-ff47-4f02-81ec-b3163d0b4b45-00-3an69uglbidm3.worf.replit.dev/"  # Твой Replit адрес
+ADMIN_ID = 7760606749  # Зміни на свій реальний ID, якщо не працює адмін
+PWA_URL = "https://0abd3f29-ff47-4f02-81ec-b3163d0b4b45-00-3an69uglbidm3.worf.replit.dev/"  # Твій Replit сайт
 RULES_URL = "https://telegra.ph/твоє_посилання_на_правила"
 INSTRUCTION_URL = "https://telegra.ph/твоє_посилання_на_інструкцію_оплати"
 SUPPORT_USERNAME = "@твій_підтримка"
@@ -267,7 +267,182 @@ async def choose_subscription(callback: CallbackQuery, state: FSMContext):
     await state.set_state(States.payment_method)
     await callback.answer()
 
-# (Весь остальной код хендлеров — от @dp.callback_query до @dp.message(Command("reset")) — как был, без изменений)
+@dp.callback_query(lambda c: c.data == "back_to_menu")
+async def back_to_menu(callback: CallbackQuery, state: FSMContext):
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🥇 3 місяці — 165 грн", callback_data="sub_3m")],
+        [InlineKeyboardButton(text="💍 6 місяців — 240 грн", callback_data="sub_6m")],
+        [InlineKeyboardButton(text="👑 Безстрокова — 400 грн", callback_data="sub_unlim")],
+        [InlineKeyboardButton(text="⏳ Тестовий доступ на 30 хвилин - 0 грн", callback_data="sub_test")]
+    ])
+    text = "Оберіть тип підписки ще раз:"
+    await callback.message.edit_text(text, reply_markup=keyboard)
+    await state.set_state(States.choose_subscription)
+
+@dp.callback_query(lambda c: c.data == "pay_crypto")
+async def pay_crypto(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    sum_to_pay = data['selected_price'] + 20
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="💸 Перейти до оплати", url="https://t.me/CryptoBot?start=pay")],
+        [InlineKeyboardButton(text="📖 Інструкція", url=INSTRUCTION_URL)],
+        [InlineKeyboardButton(text="🆘 Підтримка", url=f"https://t.me/{SUPPORT_USERNAME[1:]}")],
+        [InlineKeyboardButton(text="🔍 Перевірити оплату", callback_data="check_crypto")],
+        [InlineKeyboardButton(text="🔙 Повернутися назад", callback_data="back_payment")]
+    ])
+    text = (
+        "💳 Оплата через CryptoBot\n\n"
+        f"💲 Сума до сплати: {sum_to_pay}₴\n"
+        "⏳ Термін дії інвойса: залишилось 59 хвилин\n"
+        "📚 Інструкцію можна переглянути за кнопкою нижче\n"
+        "❗️ Увага: підписка буде активована автоматично після оплати"
+    )
+    await callback.message.edit_text(text, reply_markup=keyboard)
+    admin_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Підключити підписку", callback_data=f"approve_crypto_{callback.from_user.id}")]
+    ])
+    await bot.send_message(ADMIN_ID, f"Користувач {callback.from_user.id} перейшов до оплати CryptoBot на {data['selected_sub']}. Підтвердити?", reply_markup=admin_keyboard)
+
+@dp.callback_query(lambda c: c.data and c.data.startswith("approve_crypto_"))
+async def approve_crypto(callback: CallbackQuery):
+    user_id = int(callback.data.split("_")[2])
+    new_code = generate_code()
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET code=?, subscription_type='paid', active=1, expiry_time=NULL WHERE user_id=?", (new_code, user_id))
+    conn.commit()
+    conn.close()
+    await send_code_message(user_id, "paid")
+    await bot.send_message(user_id, "✅ Ваша підписка активована!")
+    await callback.answer("Підписку підключено")
+
+@dp.callback_query(lambda c: c.data == "check_crypto")
+async def check_crypto(callback: CallbackQuery):
+    text = (
+        "Вам автоматично надійде SMS-повідомлення після успішного підключення підписки.\n"
+        "У повідомленні буде підтвердження активації, а також вся необхідна інформація для подальшого користування сервісом."
+    )
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🔙 Назад", callback_data="back_payment")]
+    ])
+    await callback.message.edit_text(text, reply_markup=keyboard)
+
+@dp.callback_query(lambda c: c.data == "pay_card")
+async def pay_card(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    base_price = data['selected_price']
+    random_kop = round(random.uniform(0.01, 0.99), 2)
+    total = base_price + random_kop
+    total_str = f"{total:.2f}"
+    await state.update_data(card_amount=total_str)
+    text = (
+        f"Ви обрали підписку на {data['selected_sub']}\n\n"
+        "Для купівлі вам треба переказати гроші за реквізитами, наведеними нижче:\n\n"
+        "Номер картки: зараз вам скинуть, очікуйте хвилин 5\n\n"
+        f"сума: {total_str} грн\n"
+        "(Сума переказу повинна бути саме такою до копійки, інакше платіж не буде зараховано)"
+    )
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Очікувати картку", callback_data="wait_card")],
+        [InlineKeyboardButton(text="🔙 Повернутися назад", callback_data="back_payment")]
+    ])
+    await callback.message.edit_text(text, reply_markup=keyboard)
+
+@dp.callback_query(lambda c: c.data == "wait_card")
+async def wait_card(callback: CallbackQuery, state: FSMContext):
+    user_id = callback.from_user.id
+    data = await state.get_data()
+    await bot.send_message(ADMIN_ID, f"Користувач {user_id} чекає номер карти. Підписка: {data['selected_sub']}, сума: {data['card_amount']} грн. Надішліть номер.")
+    await callback.message.edit_text("Очікуйте ~5 хвилин, номер карти надійде.")
+    await state.set_state(States.waiting_card)
+
+@dp.message(lambda m: m.from_user and m.from_user.id == ADMIN_ID and m.text and m.text.startswith("card "))
+async def admin_send_card(message: Message):
+    try:
+        parts = message.text.split(" ", 2)
+        user_id = int(parts[1])
+        card_number = parts[2]
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="Перевірити оплату", callback_data="check_payment_card")]
+        ])
+        await bot.send_message(user_id, f"Номер картки: {card_number}\n\nПісля переказу натисніть кнопку нижче.", reply_markup=keyboard)
+    except Exception as e:
+        await message.answer(f"Помилка формату: {e}\nВикористовуйте: card USER_ID номер_картки")
+
+@dp.callback_query(lambda c: c.data == "check_payment_card")
+async def check_payment_card(callback: CallbackQuery, state: FSMContext):
+    await callback.message.edit_text("📄 Надішліть квитанцію у форматі .pdf")
+    await state.set_state(States.waiting_receipt)
+
+@dp.message(States.waiting_receipt, lambda m: m.document and m.document.mime_type == "application/pdf")
+async def receive_receipt(message: Message):
+    user_id = message.from_user.id
+    file_path = f"{RECEIPTS_DIR}/{user_id}.pdf"
+    await message.document.download(destination_file=file_path)
+    admin_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Видати підписку", callback_data=f"approve_card_{user_id}")],
+        [InlineKeyboardButton(text="Запретити", callback_data=f"deny_card_{user_id}")]
+    ])
+    await bot.send_document(ADMIN_ID, message.document.file_id, caption=f"Квитанція від користувача {user_id}", reply_markup=admin_keyboard)
+    await message.answer("Квитанцію надіслано на перевірку. Очікуйте.")
+
+@dp.callback_query(lambda c: c.data and c.data.startswith("approve_card_"))
+async def approve_card(callback: CallbackQuery):
+    user_id = int(callback.data.split("_")[2])
+    new_code = generate_code()
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET code=?, subscription_type='paid', active=1, expiry_time=NULL WHERE user_id=?", (new_code, user_id))
+    conn.commit()
+    conn.close()
+    await send_code_message(user_id, "paid")
+    await bot.send_message(user_id, "✅ Ваша підписка активована!")
+    await callback.answer("Підписку видано")
+
+@dp.callback_query(lambda c: c.data and c.data.startswith("deny_card"))
+async def deny_card(callback: CallbackQuery):
+    user_id = int(callback.data.split("_")[2])
+    text = (
+        "Вашу підписку було відхилено.\n"
+        "Вашу підписку було відхилено.\n"
+        "Якщо ви дійсно здійснили оплату, будь ласка, зв’яжіться зі службою підтримки для перевірки платежу."
+    )
+    await bot.send_message(user_id, text)
+    await callback.answer("Підписку відхилено")
+
+@dp.callback_query(lambda c: c.data == "back_payment")
+async def back_payment(callback: CallbackQuery, state: FSMContext):
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="💳 CryptoBot", callback_data="pay_crypto")],
+        [InlineKeyboardButton(text="💰 Переказ на картку", callback_data="pay_card")],
+        [InlineKeyboardButton(text="🔙 Повернутися назад", callback_data="back_to_menu")]
+    ])
+    await callback.message.edit_text("Оберіть спосіб оплати:", reply_markup=keyboard)
+
+@dp.message(Command("reset"))
+async def cmd_reset(message: Message):
+    if message.from_user.id != ADMIN_ID:
+        return
+    try:
+        parts = message.text.split()
+        if len(parts) != 2:
+            await message.answer("Формат: /reset USER_ID")
+            return
+        target_user_id = int(parts[1])
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM users WHERE user_id = ?", (target_user_id,))
+        conn.commit()
+        conn.close()
+        await message.answer(f"✅ Акаунт користувача {target_user_id} обнулено!\nТепер він може пройти реєстрацію і взяти тестовий доступ заново.")
+        try:
+            await bot.send_message(target_user_id, "🔄 Ваш акаунт обнулено адміністратором. Тепер ви можете пройти реєстрацію заново (/start).")
+        except:
+            pass
+    except ValueError:
+        await message.answer("Неправильний формат USER_ID (має бути число)")
+    except Exception as e:
+        await message.answer(f"Помилка: {e}")
 
 async def main():
     init_db()
