@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Дія</title>
     <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192x192.png">
-    <link rel="apple-touch-icon" sizes="512x512" href="/icon-512x512.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Дія">
     <meta name="theme-color" content="#ffffff">
     <script>
         if ('serviceWorker' in navigator) {
@@ -18,12 +15,12 @@
     </script>
     <style>
         * {margin:0;padding:0;box-sizing:border-box;}
-        body {font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #ffffff; color: #000; height: 100vh; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; text-align: center; padding-top: 60px;}
+        body {font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #ffffff; color: #000; height: 100vh; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; text-align: center;}
         .warning-box {
             background: rgba(255,255,255,0.9);
             border-radius: 16px;
             padding: 16px 24px;
-            margin: 0 20px 40px;
+            margin: 60px 20px 40px;
             width: 90%;
             max-width: 380px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
@@ -51,17 +48,6 @@
             font-weight: 900;
             margin: 24px 0 16px;
             color: #000;
-        }
-        .chrome-list {
-            font-size: 20px;
-            line-height: 1.8;
-            text-align: left;
-            max-width: 380px;
-            padding-left: 40px;
-            margin: 0;
-        }
-        .chrome-list li {
-            margin-bottom: 20px;
         }
         .code-entry {
             display: none;
@@ -174,7 +160,7 @@
             color: #fff;
         }
         @media (display-mode: standalone), (display-mode: fullscreen) {
-            .warning-box, .chrome-title, .chrome-list {
+            .warning-box, .chrome-title {
                 display: none;
             }
             .code-entry {
@@ -194,11 +180,6 @@
     </div>
 
     <div class="chrome-title">Chrome</div>
-    <ol class="chrome-list">
-        <li>натисніть на три точки в правому верхньому куті</li>
-        <li>натисніть на "Додати на головний екран"</li>
-        <li>"Додати"</li>
-    </ol>
 
     <div class="code-entry">
         <p>Спочатку додайте на екран!<br>Введiть код авторизацii вiд бота</p>
@@ -258,7 +239,7 @@
         function checkCode() {
             const code = document.getElementById('code').value.trim();
             if (code.length !== maxLength) {
-                alert("Введіть повний код (4 символів)!");
+                alert("Введіть повний код (4 символи)!");
                 return;
             }
             document.querySelector('.code-entry').style.display = 'none';
