@@ -4,7 +4,7 @@ import os
 import random
 import string
 import datetime
-import sqlite3  # Все через синхронний sqlite3
+import sqlite3
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
@@ -16,11 +16,11 @@ from flask_cors import CORS
 import threading
 
 # ================== НАЛАШТУВАННЯ ==================
-BOT_TOKEN = "8464882605:AAEeg1wShpxq9n14OJelhoS4t6StaUA_oqY"  # Твій токен
+BOT_TOKEN = "8464882605:AAEeg1wShpxq9n14OJelhoS4t6StaUA_oqY"
 CHANNEL_USERNAME = "@feikDiq"
 CHANNEL_ID = -1001234567890
-ADMIN_ID = 7760606749  # Зміни на свій реальний ID, якщо не працює адмін
-PWA_URL = "https://0abd3f29-ff47-4f02-81ec-b3163d0b4b45-00-3an69uglbidm3.worf.replit.dev/"  # Твій Replit сайт
+ADMIN_ID = 7760606749  # Зміни на свій реальний Telegram ID !!!
+PWA_URL = "https://diia-pwa.1112223334ns.repl.co"  # Твій актуальний Replit URL !!!
 RULES_URL = "https://telegra.ph/твоє_посилання_на_правила"
 INSTRUCTION_URL = "https://telegra.ph/твоє_посилання_на_інструкцію_оплати"
 SUPPORT_USERNAME = "@твій_підтримка"
@@ -302,6 +302,7 @@ async def pay_crypto(callback: CallbackQuery, state: FSMContext):
         [InlineKeyboardButton(text="Підключити підписку", callback_data=f"approve_crypto_{callback.from_user.id}")]
     ])
     await bot.send_message(ADMIN_ID, f"Користувач {callback.from_user.id} перейшов до оплати CryptoBot на {data['selected_sub']}. Підтвердити?", reply_markup=admin_keyboard)
+    await callback.answer()
 
 @dp.callback_query(lambda c: c.data and c.data.startswith("approve_crypto_"))
 async def approve_crypto(callback: CallbackQuery):
@@ -347,6 +348,8 @@ async def pay_card(callback: CallbackQuery, state: FSMContext):
         [InlineKeyboardButton(text="🔙 Повернутися назад", callback_data="back_payment")]
     ])
     await callback.message.edit_text(text, reply_markup=keyboard)
+    await bot.send_message(ADMIN_ID, f"Користувач {callback.from_user.id} чекає номер карти. Підписка: {data['selected_sub']}, сума: {data['card_amount']} грн. Надішліть номер.")
+    await callback.answer()
 
 @dp.callback_query(lambda c: c.data == "wait_card")
 async def wait_card(callback: CallbackQuery, state: FSMContext):
