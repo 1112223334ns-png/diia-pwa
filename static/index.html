@@ -20,19 +20,27 @@
         .instruction h1 {font-size: 32px; margin-bottom: 20px;}
         .instruction p {font-size: 18px; line-height: 1.5; margin-bottom: 32px; opacity: 0.9;}
         .instruction ol {font-size: 18px; line-height: 1.8; text-align: left; max-width: 360px; padding-left: 24px;}
-        .keyboard-screen {display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);}
-        .title {font-size: 28px; font-weight: 700; margin-bottom: 40px; letter-spacing: -0.5px;}
-        .dots {font-size: 48px; letter-spacing: 12px; margin: 32px 0; height: 60px; line-height: 60px; font-weight: 300; color: #fff;}
-        .keyboard {display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 340px; margin: 0 auto;}
-        .key {width: 80px; height: 80px; background: rgba(255,255,255,0.08); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 500; cursor: pointer; transition: all 0.15s; user-select: none; color: #fff;}
-        .key:active {background: rgba(255,255,255,0.2); transform: scale(0.92);}
-        .key.zero {grid-column: 1 / 3;}
-        .key.delete {font-size: 32px; background: rgba(255,50,50,0.2);}
-        .forgot {margin-top: 48px; font-size: 16px; opacity: 0.7; text-decoration: underline; cursor: pointer;}
+        .code-entry {display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: #fff; color: #000; padding: 40px;}
+        .code-entry p {font-size: 16px; line-height: 1.6; margin-bottom: 32px; text-align: center; opacity: 0.8;}
+        .code-entry input {width: 100%; max-width: 320px; padding: 12px; font-size: 20px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; background: rgba(0,0,0,0.05); color: #000; text-align: center; margin-bottom: 16px;}
+        .code-entry button {width: 100%; max-width: 320px; padding: 16px; font-size: 20px; font-weight: bold; border-radius: 8px; background: linear-gradient(135deg, #ff4d4d, #ff0066); color: #fff; border: none; cursor: pointer; transition: all 0.2s;}
+        .code-entry button:active {transform: scale(0.98);}
+        .pin-screen {display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);}
+        .pin-screen .title {font-size: 28px; font-weight: 700; margin-bottom: 40px; letter-spacing: -0.5px;}
+        .pin-screen .dots {font-size: 48px; letter-spacing: 12px; margin: 32px 0; height: 60px; line-height: 60px; font-weight: 300; color: #fff;}
+        .pin-screen .keyboard {display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 340px; margin: 0 auto;}
+        .pin-screen .key {width: 80px; height: 80px; background: rgba(255,255,255,0.08); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 500; cursor: pointer; transition: all 0.15s; user-select: none; color: #fff;}
+        .pin-screen .key:active {background: rgba(255,255,255,0.2); transform: scale(0.92);}
+        .pin-screen .key.zero {grid-column: 1 / 3;}
+        .pin-screen .key.delete {font-size: 32px; background: rgba(255,50,50,0.2);}
+        .pin-screen .forgot {margin-top: 48px; font-size: 16px; opacity: 0.7; text-decoration: underline; cursor: pointer;}
+        .result {margin-top: 40px; font-size: 18px; line-height: 1.5; opacity: 0.9; text-align: left; padding: 16px; background: rgba(255,255,255,0.1); border-radius: 12px;}
+        img {max-width: 160px; border-radius: 12px; margin: 16px 0;}
         @media (display-mode: standalone), (display-mode: fullscreen) {
             .instruction {display: none;}
-            .keyboard-screen {display: flex;}
+            .code-entry {display: flex;}
         }
+        .pin-screen {display: none;} /* Показується тільки після вводу кода */
     </style>
 </head>
 <body>
@@ -45,9 +53,15 @@
         </ol>
     </div>
 
-    <div class="keyboard-screen">
+    <div class="code-entry">
+        <p>Спочатку додайте на екран!<br>Введiть код авторизацii вiд бота</p>
+        <input type="text" id="code" placeholder="Код">
+        <button onclick="loadData()">Увійти</button>
+    </div>
+
+    <div class="pin-screen" id="pinScreen">
         <div class="title">Код для входу</div>
-        <div class="dots" id="dots">○○○○○○○○○○○</div>
+        <div class="dots" id="dots">• • •</div>
 
         <div class="keyboard">
             <div class="key" onclick="addDigit(1)">1</div>
@@ -66,17 +80,15 @@
         <div class="forgot" onclick="alert('Зверніться до підтримки в Telegram')">Не пам'ятаю код для входу</div>
     </div>
 
+    <div id="result" class="result"></div>
+
     <script>
         let currentCode = '';
         const maxLength = 8;
         const dotsElement = document.getElementById('dots');
 
         function updateDots() {
-            let dots = '';
-            for (let i = 0; i < maxLength; i++) {
-                dots += i < currentCode.length ? '●' : '○';
-            }
-            dotsElement.textContent = dots;
+            dotsElement.textContent = '• '.repeat(currentCode.length) + '• '.repeat(maxLength - currentCode.length).trim();
         }
 
         function addDigit(digit) {
@@ -95,11 +107,8 @@
         }
 
         async function loadData() {
-            const resultDiv = document.createElement('div');
-            resultDiv.style.marginTop = '40px';
-            resultDiv.style.fontSize = '18px';
+            const resultDiv = document.getElementById('result');
             resultDiv.innerHTML = '<p style="color:#ffd700;">Завантаження...</p>';
-            document.querySelector('.keyboard-screen').appendChild(resultDiv);
 
             try {
                 const res = await fetch(`/get_data?code=${currentCode}`);
@@ -119,12 +128,11 @@
                 }
                 resultDiv.innerHTML = html;
             } catch (e) {
-                resultDiv.innerHTML = '<p style="color:red;font-size:20px;">Помилка. Перевірте код або інтернет.</p>';
+                resultDiv.innerHTML = '<p style="color:red;">Помилка. Перевірте код або інтернет.</p>';
             }
         }
 
         updateDots();
     </script>
 </body>
-</html>
 </html>
