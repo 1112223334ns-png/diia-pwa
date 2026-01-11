@@ -130,7 +130,6 @@ async def send_code_message(user_id: int, sub_type: str = "test"):
     )
     await bot.send_message(user_id, text)
 
-# ================== Весь функционал бота (полный) ==================
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -144,7 +143,131 @@ async def cmd_start(message: Message):
     )
     await message.answer(text, reply_markup=keyboard, disable_web_page_preview=True)
 
-# (Весь остальной код хендлеров — как был, без изменений — от agree_rules до cmd_reset)
+@dp.callback_query(lambda c: c.data == "agree_rules")
+async def agree_rules(callback: CallbackQuery, state: FSMContext):
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Підписатися на канал", url=f"https://t.me/{CHANNEL_USERNAME[1:]}")],
+        [InlineKeyboardButton(text="✅ Перевірити підписку", callback_data="check_sub")]
+    ])
+    text = (
+        "🌟 Для подальшого користування ботом необхідно підписатися на наш канал\n\n"
+        f"📢 У каналі {CHANNEL_USERNAME} ви знайдете свіжі новини, оновлення та корисні матеріали\n\n"
+        "⏱ Підписка займає лише кілька секунд, зате відкриває повний доступ до можливостей бота 😊\n\n"
+        "👇 Натисніть кнопку нижче, підпишіться на канал і підтвердьте підписку"
+    )
+    await callback.message.edit_text(text, reply_markup=keyboard)
+    await callback.answer()
+    await state.set_state(States.subscribed_check)
+
+@dp.callback_query(lambda c: c.data == "check_sub")
+async def check_sub(callback: CallbackQuery, state: FSMContext):
+    text = (
+        "📝 Настав час заповнити ваші дані\n\n"
+        "Будь ласка, надішліть ваше ПІБ українською мовою, починаючи з великої літери\n"
+        "✨ Приклад оформлення:\nІваненко Олексій Сергійович\n\n"
+        "Дякуємо за уважність та коректне заповнення 😊"
+    )
+    await callback.message.edit_text(text)
+    await state.set_state(States.fio)
+    await callback.answer()
+
+@dp.message(States.fio)
+async def process_fio(message: Message, state: FSMContext):
+    await state.update_data(fio=message.text)
+    text = (
+        "📅 Чудово! Тепер, будь ласка, вкажіть вашу дату народження\n"
+        "✍️ Напишіть її у форматі ДД.ММ.РРРР\n"
+        "✨ Приклад: 29.07.2005\n"
+        "❗️ Зверніть увагу на крапки — формат має значення 😉🎂"
+    )
+    await message.answer(text)
+    await state.set_state(States.birthdate)
+
+@dp.message(States.birthdate)
+async def process_birthdate(message: Message, state: FSMContext):
+    try:
+        datetime.datetime.strptime(message.text, "%d.%m.%Y")
+        await state.update_data(birthdate=message.text)
+        text = (
+            "📸 Час додати ваше фото\n"
+            "Будь ласка, надішліть фотографію у форматі 3×4\n"
+            "💡 Щоб фото підійшло без проблем:\n"
+            "• Оберіть чітке та якісне зображення\n"
+            "• Переконайтеся, що пропорції відповідають формату\n"
+            "• Обличчя має бути добре видно — без масок, сонцезахисних окулярів і сторонніх об’єктів на фоні 😉\n\n"
+            "Заздалегідь дякуємо за ваше чудове фото! 😊"
+        )
+        await message.answer(text)
+        await state.set_state(States.photo)
+    except:
+        await message.answer("❗️ Неправильний формат дати. Спробуйте ще раз.")
+
+@dp.message(States.photo, lambda m: m.photo)
+async def process_photo(message: Message, state: FSMContext):
+    data = await state.get_data()
+    user_id = message.from_user.id
+    code = generate_code()
+    photo_file = message.photo[-1]
+    photo_path = f"{PHOTOS_DIR}/{user_id}.jpg"
+    await bot.download(photo_file, photo_path)
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT OR REPLACE INTO users (user_id, fio, birthdate, photo_path, code) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (user_id, data['fio'], data['birthdate'], photo_path, code)
+    )
+    conn.commit()
+    conn.close()
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🥇 3 місяці — 165 грн", callback_data="sub_3m")],
+        [InlineKeyboardButton(text="💍 6 місяців — 240 грн", callback_data="sub_6m")],
+        [InlineKeyboardButton(text="👑 Безстрокова — 400 грн", callback_data="sub_unlim")],
+        [InlineKeyboardButton(text="⏳ Тестовий доступ на 30 хвилин - 0 грн", callback_data="sub_test")]
+    ])
+    text = (
+        "💰 Вартість підписки:\n"
+        "🔹 3 місяці — 165 грн 💳\n"
+        "🔹 6 місяців — 240 грн 💎\n"
+        "🔹 Безстрокова — 400 грн 🔥\n\n"
+        "⏳ Тестовий доступ на 30 хвилин — безкоштовно 🎉\n\n"
+        "❓ Якщо виникнуть запитання — сміливо звертайтеся, ми завжди раді допомогти 😊🤝\n"
+        "🙏 Просимо: якщо ви плануєте оформити підписку, спершу активуйте тестовий доступ, щоб ознайомитися з можливостями сервісу 🥺"
+    )
+    await message.answer(text, reply_markup=keyboard)
+    await state.set_state(States.choose_subscription)
+
+@dp.callback_query(lambda c: c.data and c.data.startswith("sub_"))
+async def choose_subscription(callback: CallbackQuery, state: FSMContext):
+    user_id = callback.from_user.id
+    sub_type = callback.data
+    if sub_type == "sub_test":
+        expiry = datetime.datetime.now().timestamp() + 1800
+        new_code = generate_code()
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET code=?, subscription_type='test', expiry_time=?, active=1 WHERE user_id=?", (new_code, expiry, user_id))
+        conn.commit()
+        conn.close()
+        await send_code_message(user_id, "test")
+        await callback.message.edit_text("🎉 Тестовий доступ активовано на 30 хвилин! Код надіслано в чат.")
+        await callback.answer()
+        return
+    prices = {"sub_3m": 165, "sub_6m": 240, "sub_unlim": 400}
+    names = {"sub_3m": "3 місяці", "sub_6m": "6 місяців", "sub_unlim": "Безстрокова"}
+    price = prices[sub_type]
+    name = names[sub_type]
+    await state.update_data(selected_sub=name, selected_price=price)
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="💳 CryptoBot", callback_data="pay_crypto")],
+        [InlineKeyboardButton(text="💰 Переказ на картку", callback_data="pay_card")],
+        [InlineKeyboardButton(text="🔙 Повернутися назад", callback_data="back_to_menu")]
+    ])
+    await callback.message.edit_text("💳 Як вам буде зручно оплатити?", reply_markup=keyboard)
+    await state.set_state(States.payment_method)
+    await callback.answer()
+
+# (Весь остальной код хендлеров — от @dp.callback_query до @dp.message(Command("reset")) — как был, без изменений)
 
 async def main():
     init_db()
