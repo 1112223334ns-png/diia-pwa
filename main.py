@@ -20,7 +20,6 @@ BOT_TOKEN = "8464882605:AAEeg1wShpxq9n14OJelhoS4t6StaUA_oqY"  # Твій ток�
 CHANNEL_USERNAME = "@feikDiq"
 CHANNEL_ID = -1001234567890
 ADMIN_ID = 7760606749  # ЗМІНИ НА СВІЙ РЕАЛЬНИЙ ID З @userinfobot
-PWA_URL = "https://6bd4885a-1966-4d98-b8b3-e156855df1c6-00-2mm8y1stuemgm.spock.replit.dev/"  # Твоя посилання
 RULES_URL = "https://telegra.ph/твоє_посилання_на_правила"
 INSTRUCTION_URL = "https://telegra.ph/твоє_посилання_на_інструкцію_оплати"
 SUPPORT_USERNAME = "@твій_підтримка"
@@ -28,6 +27,11 @@ DB_FILE = "users.db"
 PHOTOS_DIR = "photos"
 RECEIPTS_DIR = "receipts"
 STATIC_DIR = "static"
+
+# Динамічне посилання Replit (коротке, стабільне, автоматично генерується)
+REPL_SLUG = os.environ.get('REPL_SLUG', 'diia-pwa')  # назва проекту
+REPL_OWNER = os.environ.get('REPL_OWNER', '1112223334ns')  # твій username
+PWA_URL = f"https://{REPL_SLUG}.{REPL_OWNER}.repl.co"
 
 os.makedirs(PHOTOS_DIR, exist_ok=True)
 os.makedirs(RECEIPTS_DIR, exist_ok=True)
