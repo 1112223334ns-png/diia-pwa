@@ -20,7 +20,7 @@ BOT_TOKEN = "8464882605:AAEeg1wShpxq9n14OJelhoS4t6StaUA_oqY"
 CHANNEL_USERNAME = "@feikDiq"
 CHANNEL_ID = -1001234567890
 ADMIN_ID = 7760606749  # Зміни на свій реальний Telegram ID !!!
-PWA_URL = "https://diia-pwa.1112223334ns.repl.co"  # Твій актуальний Replit URL !!!
+PWA_URL = "PWA_URL = "https://54ea4241-8157-43fb-9ca8-198f7d0dd46b-00-3d0k52f2s1oxa.janeway.replit.dev/""  # Твій актуальний Replit URL !!!
 RULES_URL = "https://telegra.ph/твоє_посилання_на_правила"
 INSTRUCTION_URL = "https://telegra.ph/твоє_посилання_на_інструкцію_оплати"
 SUPPORT_USERNAME = "@твій_підтримка"
