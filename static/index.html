@@ -28,34 +28,54 @@
             text-align: center;
             padding: 40px;
         }
-        h1 {
-            font-size: 56px;
-            font-weight: 700;
+        .warning-box {
+            background: rgba(255,255,255,0.9);
+            border-radius: 16px;
+            padding: 16px 24px;
             margin-bottom: 48px;
-            color: #000;
+            width: 90%;
+            max-width: 380px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        .instructions {
-            font-size: 22px;
-            line-height: 1.6;
-            max-width: 420px;
+        .warning-icon {
+            font-size: 32px;
+            color: #ff4d4d;
+            font-weight: bold;
+        }
+        .warning-text {
+            font-size: 16px;
+            line-height: 1.4;
+            color: #000;
             text-align: left;
         }
-        .instructions p {
-            margin-bottom: 16px;
+        .warning-text strong {
+            color: #ff4d4d;
+        }
+        h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #000;
         }
         @media (display-mode: standalone), (display-mode: fullscreen) {
-            body {background: #ffffff;}
-            h1, .instructions {display: none;}
+            .warning-box, h1 {display: none;}
             /* Тут можна додати екран вводу кода після установки */
         }
     </style>
 </head>
 <body>
-    <h1>Chrome</h1>
-    <div class="instructions">
-        <p>1. натисніть на три точки в правому верхньому куті</p>
-        <p>2. натисніть на "Додати на головний екран"</p>
-        <p>3. "Додати"</p>
+    <div class="warning-box">
+        <div class="warning-icon">!</div>
+        <div class="warning-text">
+            <strong>Телеграм заблокував канал і бот.</strong><br>
+            Всі новини — в каналі
+        </div>
     </div>
+
+    <h1>Chrome</h1>
 </body>
 </html>
