@@ -1,211 +1,32 @@
+
 <!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Дія</title>
-    <link rel="manifest" href="/manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#ffffff">
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js');
-        }
-    </script>
-    <style>
-        * {margin:0;padding:0;box-sizing:border-box;}
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: #f5f5f5;
-            color: #000;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        header {
-            background: linear-gradient(to right, #00a3e0, #0091d2);
-            color: white;
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: #0091d2;
-        }
-        .header-title {
-            font-size: 24px;
-            font-weight: 700;
-        }
-        .main {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        .documents {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-        .doc-card {
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-        .doc-card:active {
-            transform: scale(0.98);
-        }
-        .doc-header {
-            background: #0091d2;
-            color: white;
-            padding: 12px;
-            font-size: 16px;
-            font-weight: 500;
-            text-align: center;
-        }
-        .doc-content {
-            padding: 16px;
-            text-align: center;
-        }
-        .doc-photo {
-            width: 120px;
-            height: 160px;
-            background: #eee;
-            margin: 0 auto 12px;
-            border-radius: 8px;
-        }
-        .doc-info {
-            font-size: 14px;
-            color: #333;
-        }
-        .doc-info strong {
-            color: #000;
-        }
-        .qr {
-            width: 80px;
-            height: 80px;
-            background: #ddd;
-            margin: 16px auto 0;
-            border-radius: 8px;
-        }
-        nav {
-            background: white;
-            border-top: 1px solid #eee;
-            display: flex;
-            justify-content: space-around;
-            padding: 12px 0;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-        }
-        .nav-item {
-            text-align: center;
-            color: #666;
-            font-size: 12px;
-        }
-        .nav-item.active {
-            color: #0091d2;
-        }
-        .nav-icon {
-            font-size: 28px;
-            margin-bottom: 4px;
-        }
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 20px;
-            color: #0091d2;
-        }
-        .hidden {
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <div id="loading" class="loading">Завантаження...</div>
-
-    <header class="hidden" id="header">
-        <div class="avatar">А</div>
-        <div class="header-title">Дія</div>
-        <div></div> <!-- placeholder для балансу -->
-    </header>
-
-    <main class="main hidden" id="main">
-        <div class="documents">
-            <div class="doc-card">
-                <div class="doc-header">Паспорт громадянина України</div>
-                <div class="doc-content">
-                    <div class="doc-photo"></div>
-                    <div class="doc-info">
-                        <strong id="fio">—</strong><br>
-                        <strong id="birthdate">—</strong>
-                    </div>
-                    <div class="qr"></div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <nav class="hidden" id="nav">
-        <div class="nav-item active">
-            <div class="nav-icon">📄</div>
-            Документи
-        </div>
-        <div class="nav-item">
-            <div class="nav-icon">🛠</div>
-            Послуги
-        </div>
-        <div class="nav-item">
-            <div class="nav-icon">✍️</div>
-            Дія.Підпис
-        </div>
-        <div class="nav-item">
-            <div class="nav-icon">👤</div>
-            Профіль
-        </div>
-    </nav>
-
-    <script>
-        async function loadData() {
-            document.getElementById('loading').textContent = 'Завантаження даних...';
-
-            try {
-                const res = await fetch(`/get_data?code=твій_код_з_бота`);
-                if (!res.ok) throw new Error("Помилка");
-                const data = await res.json();
-
-                document.getElementById('fio').textContent = data.fio || '—';
-                document.getElementById('birthdate').textContent = data.birthdate || '—';
-
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('header').classList.remove('hidden');
-                document.getElementById('main').classList.remove('hidden');
-                document.getElementById('nav').classList.remove('hidden');
-            } catch (e) {
-                document.getElementById('loading').textContent = 'Помилка завантаження. Спробуйте пізніше.';
-            }
-        }
-
-        // Запускаємо завантаження після установки (можна додати таймер або кнопку)
-        setTimeout(loadData, 1000); // Автоматично після 1 секунди
-    </script>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+        <title>nashadia</title>
+        
+        <!-- Локальные стили (замените пути на свои) -->
+        <link href="css/chunk-vendors.708b50b3.css" rel="stylesheet">
+        <link href="css/app.ff73e44b.css" rel="stylesheet">
+        
+        <!-- Иконки (замените пути на свои) -->
+        <link rel="icon" type="image/png" sizes="32x32" href="img/icons/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="img/icons/favicon-16x16.png">
+        <link rel="manifest" href="manifest.json">
+        
+        <meta name="theme-color" content="#000000">
+    </head>
+    <body>
+        <noscript>
+            <strong>We're sorry but fundocs doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+        </noscript>
+        <div id="app"></div>
+        
+        <!-- Локальные скрипты (замените пути на свои) -->
+        <script src="js/chunk-vendors.3788357c.js"></script>
+        <script src="js/app.7a817774.js?v=1.0.2"></script>
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"ecab88042a6b4174af872a8d858083c3","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
