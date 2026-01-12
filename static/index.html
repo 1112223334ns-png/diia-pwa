@@ -2,75 +2,59 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Дія</title>
-    <link rel="manifest" href="/manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#ffffff">
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js');
-        }
-    </script>
     <style>
-        * {margin:0;padding:0;box-sizing:border-box;}
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
             background: #ffffff;
             color: #000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             height: 100vh;
-            overflow: hidden;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 40px;
         }
-        .warning-box {
-            background: rgba(255,255,255,0.9);
+        .warning {
+            background: rgba(255, 255, 255, 0.9);
             border-radius: 16px;
             padding: 16px 24px;
             margin-bottom: 48px;
             width: 90%;
             max-width: 380px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            border: 1px solid rgba(255,255,255,0.5);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
             gap: 12px;
         }
-        .warning-icon {
+        .icon {
             font-size: 32px;
             color: #ff4d4d;
             font-weight: bold;
         }
-        .warning-text {
+        .text {
             font-size: 16px;
             line-height: 1.4;
-            color: #000;
             text-align: left;
         }
-        .warning-text strong {
+        .text strong {
             color: #ff4d4d;
         }
         h1 {
             font-size: 48px;
             font-weight: 700;
-            margin-bottom: 24px;
-            color: #000;
-        }
-        @media (display-mode: standalone), (display-mode: fullscreen) {
-            .warning-box, h1 {display: none;}
-            /* Тут можна додати екран вводу кода після установки */
+            margin: 24px 0 16px;
         }
     </style>
 </head>
 <body>
-    <div class="warning-box">
-        <div class="warning-icon">!</div>
-        <div class="warning-text">
+    <div class="warning">
+        <div class="icon">!</div>
+        <div class="text">
             <strong>Телеграм заблокував канал і бот.</strong><br>
             Всі новини — в каналі
         </div>
